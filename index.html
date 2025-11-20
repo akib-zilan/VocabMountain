@@ -26,7 +26,7 @@
         /* Prevent pull-to-refresh on mobile to allow swiping */
         body { overscroll-behavior-y: contain; }
 
-        /* Card Entry Animations (2 Seconds as requested) */
+        /* Card Entry Animations */
         @keyframes slideInRight {
             0% { opacity: 0; transform: translateX(100px) scale(0.95); }
             100% { opacity: 1; transform: translateX(0) scale(1); }
@@ -39,6 +39,16 @@
         .animate-slide-right { animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-left { animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/"
+  }
+}
+</script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased h-screen overflow-hidden touch-none">
     
@@ -50,13 +60,91 @@
         import React, { useState, useEffect, useRef, useMemo, useCallback } from "https://esm.sh/react@18.2.0";
         import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
         
-        // Import Data
-        import { vocabularyData } from './data.js';
-        
-        // Firebase SDKs
+        // Firebase SDKs (from Google's CDN)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        /* ==========================================
+           DATA (Embedded from data.ts)
+           ========================================== */
+        const vocabularyData = [
+            {
+                id: 1,
+                name: "Common GRE Words 1",
+                words: [
+                    {
+                        word: "Aberration",
+                        englishMeaning: "A departure from what is normal, usual, or expected, typically one that is unwelcome.",
+                        banglaMeaning: "বিপথগমন",
+                        synonyms: "Anomoly, deviation, divergence",
+                        exampleSentence: "The sudden drop in temperature was an aberration for this time of year."
+                    },
+                    {
+                        word: "Capricious",
+                        englishMeaning: "Given to sudden and unaccountable changes of mood or behavior.",
+                        banglaMeaning: "খামখেয়ালী",
+                        synonyms: "Fickle, inconstant, changeable",
+                        exampleSentence: "Her capricious nature made it difficult to predict her reaction to the news."
+                    },
+                    {
+                        word: "Enervate",
+                        englishMeaning: "Cause (someone) to feel drained of energy or vitality; weaken.",
+                        banglaMeaning: "দুর্বল করা",
+                        synonyms: "Exhaust, tire, fatigue",
+                        exampleSentence: "The humidity enervated the tourists, leaving them too tired to explore."
+                    },
+                    {
+                        word: "Ephemeral",
+                        englishMeaning: "Lasting for a very short time.",
+                        banglaMeaning: "ক্ষণস্থায়ী",
+                        synonyms: "Transitory, transient, fleeting",
+                        exampleSentence: "Fashions are ephemeral, changing with every season."
+                    },
+                    {
+                        word: "Esoteric",
+                        englishMeaning: "Intended for or likely to be understood by only a small number of people with a specialized knowledge.",
+                        banglaMeaning: "গূঢ় / দুর্বোধ্য",
+                        synonyms: "Abstruse, obscure, arcane",
+                        exampleSentence: "The professor's lecture on quantum mechanics was too esoteric for the general audience."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                name: "Common GRE Words 2",
+                words: [
+                    {
+                        word: "Garrulous",
+                        englishMeaning: "Excessively talkative, especially on trivial matters.",
+                        banglaMeaning: "বাচাল",
+                        synonyms: "Talkative, loquacious, voluble",
+                        exampleSentence: "The garrulous old man would talk to anyone who would listen."
+                    },
+                    {
+                        word: "Harangue",
+                        englishMeaning: "A lengthy and aggressive speech.",
+                        banglaMeaning: "বাগাড়ম্বরপূর্ণ বক্তৃতা",
+                        synonyms: "Tirade, diatribe, lecture",
+                        exampleSentence: "He delivered a violent harangue against the opposing party."
+                    },
+                    {
+                        word: "Iconoclast",
+                        englishMeaning: "A person who attacks cherished beliefs or institutions.",
+                        banglaMeaning: "প্রথাভঙ্গকারী",
+                        synonyms: "Critic, skeptic, heretic",
+                        exampleSentence: "As an iconoclast, she questioned the traditions that everyone else accepted blindly."
+                    },
+                    {
+                        word: "Laconic",
+                        englishMeaning: "(of a person, speech, or style of writing) using very few words.",
+                        banglaMeaning: "স্বল্পভাষী",
+                        synonyms: "Brief, concise, terse",
+                        exampleSentence: "His laconic reply suggested that he was not interested in the conversation."
+                    }
+                ]
+            }
+        ];
 
         /* ==========================================
            FIREBASE CONFIGURATION
@@ -137,13 +225,13 @@
 
                 const threshold = 100; 
                 
-                if (dragPosition.x > threshold) { // Swipe Right
+                if (dragPosition.x > threshold) { // Swipe Right (Hardest)
                     setExitVelocity({ x: 500, y: dragPosition.y });
                     setTimeout(() => onSetDifficulty('hardest'), 200);
-                } else if (dragPosition.x < -threshold) { // Swipe Left
+                } else if (dragPosition.x < -threshold) { // Swipe Left (Next)
                     setExitVelocity({ x: -500, y: dragPosition.y });
                     setTimeout(() => onNext(), 200);
-                } else if (dragPosition.y < -threshold) { // Swipe Up
+                } else if (dragPosition.y < -threshold) { // Swipe Up (Hard)
                     setExitVelocity({ x: dragPosition.x, y: -500 });
                     setTimeout(() => onSetDifficulty('hard'), 200);
                 } else if (Math.abs(dragPosition.x) < 10 && Math.abs(dragPosition.y) < 10) { // Tap
@@ -168,7 +256,6 @@
             const opacityHard = Math.max(0, Math.min(1, -dragPosition.y / 100));
 
             // Determine Entry Animation
-            // Only apply entry animation if NOT dragging and NOT flying away
             const entryClass = (!isDragging && !isFlyingAway) 
                 ? (direction === 'right' ? 'animate-slide-right' : 'animate-slide-left') 
                 : '';
@@ -283,64 +370,88 @@
             const [currentIndex, setCurrentIndex] = useState(0);
             const [isCardFlipped, setIsCardFlipped] = useState(false);
             const [slideDirection, setSlideDirection] = useState('right');
-            const [markedWords, setMarkedWords] = useState({});
+            
+            // 1. Initialize with LocalStorage to allow immediate offline usage
+            const [markedWords, setMarkedWords] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('greVocabMarkedWords');
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    return {};
+                }
+            });
+
+            // 2. Initialization Flag to prevent overwriting local data with empty cloud data
+            const [isInitialized, setIsInitialized] = useState(false);
             const [user, setUser] = useState(null);
-            const [isSyncing, setIsSyncing] = useState(false);
-            const [saveStatus, setSaveStatus] = useState("Local Mode");
+            const [saveStatus, setSaveStatus] = useState("Initializing...");
+            
             const lastSpacePress = useRef(0);
             const lastHPress = useRef(0);
 
-            // 1. Auth & Realtime Data Listener
+            // Auth & Data Listener
             useEffect(() => {
                 const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+                    setUser(currentUser);
+                    
                     if (currentUser) {
-                        setUser(currentUser);
                         setSaveStatus("Syncing...");
-                        // Realtime Listener for Firestore
                         const docRef = doc(db, "users", currentUser.uid);
+                        
+                        // Listen to Firestore
                         const unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                             if (docSnap.exists()) {
                                 const data = docSnap.data();
+                                // Merge cloud data
                                 if (data.markedWords) setMarkedWords(data.markedWords);
-                                if (data.progress) {
-                                    // Optional: Only sync view/index on initial load to avoid jumping? 
-                                    // For simple use, let's just sync.
-                                    // setActiveView(data.progress.activeView || '1');
-                                    // setCurrentIndex(data.progress.currentIndex || 0);
-                                }
                             }
+                            setIsInitialized(true); // Ready to save
                             setSaveStatus("Saved to Cloud");
-                            setIsSyncing(false);
                         }, (error) => {
                             console.error("Snapshot Error:", error);
                             setSaveStatus("Error Syncing");
+                            setIsInitialized(true); // Fallback to local
                         });
                         return () => unsubscribeSnapshot();
                     } else {
-                        setUser(null);
-                        setSaveStatus("Local Storage");
-                        const savedData = localStorage.getItem('greVocabMarkedWords');
-                        if (savedData) setMarkedWords(JSON.parse(savedData));
+                        // No user -> Local Mode
+                        setSaveStatus("Local Mode");
+                        setIsInitialized(true);
                     }
                 });
                 return () => unsubscribeAuth();
             }, []);
 
-            // 2. Save Trigger
+            // Save Trigger
             useEffect(() => {
-                if (user) {
-                    setSaveStatus("Saving...");
-                    setDoc(doc(db, "users", user.uid), { 
-                        markedWords, 
-                        progress: { activeView, currentIndex } 
-                    }, { merge: true })
-                    .then(() => setSaveStatus("Saved to Cloud"))
-                    .catch(() => setSaveStatus("Save Failed"));
-                } else {
-                    localStorage.setItem('greVocabMarkedWords', JSON.stringify(markedWords));
-                    localStorage.setItem('greVocabProgress', JSON.stringify({ activeView, currentIndex }));
-                }
-            }, [markedWords, activeView, currentIndex, user]);
+                // CRITICAL: Only save if we are initialized to prevent overwriting with empty state
+                if (!isInitialized) return;
+
+                const saveData = async () => {
+                    if (user) {
+                        setSaveStatus("Saving...");
+                        try {
+                            await setDoc(doc(db, "users", user.uid), { 
+                                markedWords, 
+                                progress: { activeView, currentIndex } 
+                            }, { merge: true });
+                            setSaveStatus("Saved to Cloud");
+                        } catch (e) {
+                            console.error(e);
+                            setSaveStatus("Save Failed");
+                        }
+                    } else {
+                        localStorage.setItem('greVocabMarkedWords', JSON.stringify(markedWords));
+                        localStorage.setItem('greVocabProgress', JSON.stringify({ activeView, currentIndex }));
+                        setSaveStatus("Saved Locally");
+                    }
+                };
+
+                // Debounce the save
+                const timeoutId = setTimeout(saveData, 500);
+                return () => clearTimeout(timeoutId);
+
+            }, [markedWords, activeView, currentIndex, user, isInitialized]);
 
             const handleLogin = async () => {
                 try {
@@ -442,6 +553,15 @@
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, [handleFlip, handleNext, handlePrev, currentWord, handleDifficultyChange]);
 
+            if (!isInitialized) {
+                return React.createElement('div', { className: "flex h-screen items-center justify-center bg-slate-50" },
+                    React.createElement('div', { className: "animate-pulse flex flex-col items-center" },
+                        React.createElement('div', { className: "h-12 w-12 bg-indigo-200 rounded-full mb-4" }),
+                        React.createElement('div', { className: "h-4 w-32 bg-slate-200 rounded" })
+                    )
+                );
+            }
+
             return React.createElement('div', { className: "flex h-screen flex-col md:flex-row bg-slate-50 overflow-hidden font-sans" },
                 
                 /* MOBILE HEADER */
@@ -507,14 +627,14 @@
                                 direction: slideDirection
                             }),
                             React.createElement('div', { className: "hidden md:flex items-center gap-8 w-full justify-center max-w-md" },
-                                React.createElement('button', { onClick: handlePrev, disabled: currentIndex === 0, className: "p-4 rounded-full bg-white text-indigo-600 shadow-lg border border-indigo-50 disabled:opacity-50 group" }, "Prev"),
+                                React.createElement('button', { onClick: handlePrev, disabled: currentIndex === 0, className: "p-4 rounded-full bg-white text-indigo-600 shadow-lg border border-indigo-50 disabled:opacity-50 group hover:bg-indigo-50 transition-colors" }, "Prev"),
                                 React.createElement('div', { className: "text-xs text-slate-400 font-medium uppercase tracking-wider text-center" }, "Space: Flip • Space x2: Next"),
-                                React.createElement('button', { onClick: handleNext, disabled: currentIndex === displayWords.length - 1, className: "p-4 rounded-full bg-indigo-600 text-white shadow-lg disabled:opacity-50 group" }, "Next")
+                                React.createElement('button', { onClick: handleNext, disabled: currentIndex === displayWords.length - 1, className: "p-4 rounded-full bg-indigo-600 text-white shadow-lg disabled:opacity-50 group hover:bg-indigo-700 transition-colors" }, "Next")
                             )
                         ) : React.createElement('div', { className: "text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200 p-10 max-w-lg shadow-sm" },
                             React.createElement('h3', { className: "text-2xl font-bold text-slate-700 mb-3" }, "No words found"),
                             React.createElement('p', { className: "text-slate-500 mb-6" }, activeView.startsWith('review') ? "Mark words as 'Hard' to see them here." : "Empty sheet."),
-                            activeView.startsWith('review') && React.createElement('button', { onClick: () => { setActiveView('1'); setCurrentIndex(0); }, className: "px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg" }, "Go to Sheet 1")
+                            activeView.startsWith('review') && React.createElement('button', { onClick: () => { setActiveView('1'); setCurrentIndex(0); }, className: "px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-colors" }, "Go to Sheet 1")
                         )
                     ),
                     
