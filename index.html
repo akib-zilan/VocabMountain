@@ -60,91 +60,13 @@
         import React, { useState, useEffect, useRef, useMemo, useCallback } from "https://esm.sh/react@18.2.0";
         import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
         
+        // Import Data from external file
+        import { vocabularyData } from './data.js';
+
         // Firebase SDKs (from Google's CDN)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        /* ==========================================
-           DATA (Embedded from data.ts)
-           ========================================== */
-        const vocabularyData = [
-            {
-                id: 1,
-                name: "Common GRE Words 1",
-                words: [
-                    {
-                        word: "Aberration",
-                        englishMeaning: "A departure from what is normal, usual, or expected, typically one that is unwelcome.",
-                        banglaMeaning: "বিপথগমন",
-                        synonyms: "Anomoly, deviation, divergence",
-                        exampleSentence: "The sudden drop in temperature was an aberration for this time of year."
-                    },
-                    {
-                        word: "Capricious",
-                        englishMeaning: "Given to sudden and unaccountable changes of mood or behavior.",
-                        banglaMeaning: "খামখেয়ালী",
-                        synonyms: "Fickle, inconstant, changeable",
-                        exampleSentence: "Her capricious nature made it difficult to predict her reaction to the news."
-                    },
-                    {
-                        word: "Enervate",
-                        englishMeaning: "Cause (someone) to feel drained of energy or vitality; weaken.",
-                        banglaMeaning: "দুর্বল করা",
-                        synonyms: "Exhaust, tire, fatigue",
-                        exampleSentence: "The humidity enervated the tourists, leaving them too tired to explore."
-                    },
-                    {
-                        word: "Ephemeral",
-                        englishMeaning: "Lasting for a very short time.",
-                        banglaMeaning: "ক্ষণস্থায়ী",
-                        synonyms: "Transitory, transient, fleeting",
-                        exampleSentence: "Fashions are ephemeral, changing with every season."
-                    },
-                    {
-                        word: "Esoteric",
-                        englishMeaning: "Intended for or likely to be understood by only a small number of people with a specialized knowledge.",
-                        banglaMeaning: "গূঢ় / দুর্বোধ্য",
-                        synonyms: "Abstruse, obscure, arcane",
-                        exampleSentence: "The professor's lecture on quantum mechanics was too esoteric for the general audience."
-                    }
-                ]
-            },
-            {
-                id: 2,
-                name: "Common GRE Words 2",
-                words: [
-                    {
-                        word: "Garrulous",
-                        englishMeaning: "Excessively talkative, especially on trivial matters.",
-                        banglaMeaning: "বাচাল",
-                        synonyms: "Talkative, loquacious, voluble",
-                        exampleSentence: "The garrulous old man would talk to anyone who would listen."
-                    },
-                    {
-                        word: "Harangue",
-                        englishMeaning: "A lengthy and aggressive speech.",
-                        banglaMeaning: "বাগাড়ম্বরপূর্ণ বক্তৃতা",
-                        synonyms: "Tirade, diatribe, lecture",
-                        exampleSentence: "He delivered a violent harangue against the opposing party."
-                    },
-                    {
-                        word: "Iconoclast",
-                        englishMeaning: "A person who attacks cherished beliefs or institutions.",
-                        banglaMeaning: "প্রথাভঙ্গকারী",
-                        synonyms: "Critic, skeptic, heretic",
-                        exampleSentence: "As an iconoclast, she questioned the traditions that everyone else accepted blindly."
-                    },
-                    {
-                        word: "Laconic",
-                        englishMeaning: "(of a person, speech, or style of writing) using very few words.",
-                        banglaMeaning: "স্বল্পভাষী",
-                        synonyms: "Brief, concise, terse",
-                        exampleSentence: "His laconic reply suggested that he was not interested in the conversation."
-                    }
-                ]
-            }
-        ];
 
         /* ==========================================
            FIREBASE CONFIGURATION
