@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +27,18 @@
         /* Prevent pull-to-refresh on mobile to allow swiping */
         body { overscroll-behavior-y: contain; }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4"
+  }
+}
+</script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased h-screen overflow-hidden touch-none">
     
@@ -40,7 +53,7 @@
         import React, { useState, useEffect, useRef, useMemo, useCallback } from "https://esm.sh/react@18.2.0";
         import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
         
-        // Import Data from external file
+        // Import Data from external file - ENSURE data.js IS IN THE SAME FOLDER
         import { vocabularyData } from './data.js';
         
         // Firebase SDKs
@@ -102,7 +115,7 @@
         const Flashcard = ({ wordData, difficulty, onSetDifficulty, isFlipped, onFlip, onNext }) => {
             const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
             const [isDragging, setIsDragging] = useState(false);
-            const [exitVelocity, setExitVelocity] = useState({ x: 0, y: 0 }); // For fly-out animation
+            const [exitVelocity, setExitVelocity] = useState({ x: 0, y: 0 });
             const cardRef = useRef(null);
             const dragStart = useRef({ x: 0, y: 0 });
 
@@ -113,17 +126,13 @@
                 setIsDragging(false);
             }, [wordData]);
 
-            // --- MOUSE (Desktop) ---
             const handleMouseDown = (e) => {
-                // Prevent drag if clicking buttons
                 if (e.target.closest('button')) return;
-                // Middle click for marking
-                if (e.button === 1) {
+                if (e.button === 1) { // Middle click
                     e.preventDefault();
                     onSetDifficulty('hard');
                     return;
                 }
-                // Only enable drag on mobile touch usually, but simple click for flip on desktop
                 if (e.button === 0) {
                      onFlip();
                 }
@@ -163,53 +172,44 @@
                 
                 // 1. Swipe Right -> Hardest
                 if (dragPosition.x > threshold) {
-                    setExitVelocity({ x: 500, y: dragPosition.y }); // Fly off screen right
+                    setExitVelocity({ x: 500, y: dragPosition.y });
                     setTimeout(() => onSetDifficulty('hardest'), 200);
                 } 
                 // 2. Swipe Left -> Next Card
                 else if (dragPosition.x < -threshold) {
-                    setExitVelocity({ x: -500, y: dragPosition.y }); // Fly off screen left
+                    setExitVelocity({ x: -500, y: dragPosition.y });
                     setTimeout(() => onNext(), 200);
                 }
                 // 3. Swipe Up -> Hard
                 else if (dragPosition.y < -threshold) {
-                    setExitVelocity({ x: dragPosition.x, y: -500 }); // Fly off screen up
+                    setExitVelocity({ x: dragPosition.x, y: -500 });
                     setTimeout(() => onSetDifficulty('hard'), 200);
                 }
-                // 4. Tap (Minimal movement) -> Flip
+                // 4. Tap -> Flip
                 else if (Math.abs(dragPosition.x) < 10 && Math.abs(dragPosition.y) < 10) {
                     onFlip();
                     setDragPosition({ x: 0, y: 0 });
                 }
-                // 5. Reset (Spring back)
+                // 5. Reset
                 else {
                     setDragPosition({ x: 0, y: 0 });
                 }
             };
 
-            // Calculate rotation based on X drag
             const rotation = dragPosition.x * 0.05;
-            
-            // Determine classes for animation state
             const isFlyingAway = exitVelocity.x !== 0 || exitVelocity.y !== 0;
-            
-            // Actual transform values
             const x = isFlyingAway ? exitVelocity.x : dragPosition.x;
             const y = isFlyingAway ? exitVelocity.y : dragPosition.y;
             const rot = isFlyingAway ? exitVelocity.x * 0.05 : rotation;
-            
-            // Transition logic: No transition while dragging (instant follow), smooth transition on release/fly
             const transitionStyle = isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
-            // Badge Opacity Logic
             const opacityHardest = Math.max(0, Math.min(1, dragPosition.x / 100));
             const opacityNext = Math.max(0, Math.min(1, -dragPosition.x / 100));
             const opacityHard = Math.max(0, Math.min(1, -dragPosition.y / 100));
 
-            // Render Badges
             const getBadge = () => {
-                if (difficulty === 'hardest') return <span className="absolute top-4 right-4 px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full z-20 shadow-sm">Hardest</span>;
-                if (difficulty === 'hard') return <span className="absolute top-4 right-4 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full z-20 shadow-sm">Hard</span>;
+                if (difficulty === 'hardest') return React.createElement('span', { className: "absolute top-4 right-4 px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full z-20 shadow-sm" }, "Hardest");
+                if (difficulty === 'hard') return React.createElement('span', { className: "absolute top-4 right-4 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full z-20 shadow-sm" }, "Hard");
                 return null;
             };
 
@@ -224,79 +224,84 @@
                 return 'border-indigo-50';
             };
 
-            return (
-                <div className="relative h-96 w-full max-w-md mx-auto [perspective:1000px]">
-                    {/* Card Container with Physics */}
-                    <div 
-                        ref={cardRef}
-                        className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none"
-                        style={{ 
-                            transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg)`,
-                            transition: transitionStyle,
-                            zIndex: 50
-                        }}
-                        onMouseDown={handleMouseDown}
-                        onDoubleClick={handleDoubleClick}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                    >
-                        <div className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
-                            
-                            {/* --- FRONT SIDE --- */}
-                            <div className={`absolute inset-0 h-full w-full rounded-3xl bg-white p-8 shadow-2xl [backface-visibility:hidden] border-4 ${getBorderColor()} flex flex-col items-center justify-center text-center select-none`}>
-                                {getBadge()}
-                                
-                                {/* Swipe Feedback Overlays */}
-                                <div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30" style={{ opacity: opacityHardest, backgroundColor: 'rgba(220, 38, 38, 0.1)' }}>
-                                    <span className="text-4xl font-black text-red-500 border-4 border-red-500 rounded-lg px-4 py-2 -rotate-12 bg-white/80">HARDEST</span>
-                                </div>
-                                <div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30" style={{ opacity: opacityNext, backgroundColor: 'rgba(79, 70, 229, 0.1)' }}>
-                                    <span className="text-4xl font-black text-indigo-500 border-4 border-indigo-500 rounded-lg px-4 py-2 rotate-12 bg-white/80">NEXT</span>
-                                </div>
-                                <div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30" style={{ opacity: opacityHard, backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
-                                    <span className="text-4xl font-black text-amber-500 border-4 border-amber-500 rounded-lg px-4 py-2 bg-white/80">HARD</span>
-                                </div>
-
-                                <div className="flex-1 flex flex-col justify-center w-full">
-                                    <h2 className="text-4xl md:text-5xl font-extrabold text-indigo-900 mb-4 break-words leading-tight">{wordData.word}</h2>
-                                </div>
-                                <div className="mt-auto pt-6 border-t border-indigo-50 w-full flex justify-between items-center text-xs text-slate-400 uppercase tracking-widest font-semibold">
-                                    <span>Tap to Flip</span>
-                                </div>
-                            </div>
-
-                            {/* --- BACK SIDE --- */}
-                            <div className={`absolute inset-0 h-full w-full rounded-3xl bg-indigo-900 p-8 shadow-2xl [transform:rotateY(180deg)] [backface-visibility:hidden] text-white flex flex-col justify-between border-4 ${difficulty === 'hardest' ? 'border-red-500' : difficulty === 'hard' ? 'border-amber-500' : 'border-indigo-800'} select-none`}>
-                                <div className="flex flex-col items-center justify-center flex-1 space-y-3 overflow-y-auto no-scrollbar">
-                                    <div className="text-center">
-                                        <h3 className="text-2xl font-bold text-yellow-400 mb-1 font-serif tracking-wide">{wordData.banglaMeaning}</h3>
-                                        <p className="text-xs text-indigo-300 italic font-medium mb-2">{wordData.synonyms}</p>
-                                    </div>
-                                    
-                                    <div className="bg-indigo-800/60 p-3 rounded-xl w-full text-center backdrop-blur-sm border border-indigo-700/50">
-                                        <p className="text-sm font-medium text-indigo-50 leading-snug">{wordData.englishMeaning}</p>
-                                    </div>
-                                    
-                                    <div className="text-center w-full px-2">
-                                        <p className="text-xs italic text-indigo-300 leading-relaxed">"{wordData.exampleSentence}"</p>
-                                    </div>
-                                </div>
-
-                                {/* Difficulty Controls (Touch Friendly) */}
-                                <div className="mt-2 pt-2 border-t border-indigo-700/50 grid grid-cols-3 gap-2">
-                                    <button onTouchEnd={(e) => handleDifficultyButton(e, null)} onClick={(e) => handleDifficultyButton(e, null)} className={`text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === null ? 'bg-indigo-600 text-white' : 'bg-indigo-950 text-indigo-400'}`}>Reset</button>
-                                    <button onTouchEnd={(e) => handleDifficultyButton(e, 'hard')} onClick={(e) => handleDifficultyButton(e, 'hard')} className={`text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === 'hard' ? 'bg-amber-500 text-white' : 'bg-indigo-950 text-amber-500/70'}`}>Hard</button>
-                                    <button onTouchEnd={(e) => handleDifficultyButton(e, 'hardest')} onClick={(e) => handleDifficultyButton(e, 'hardest')} className={`text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === 'hardest' ? 'bg-red-600 text-white' : 'bg-indigo-950 text-red-500/70'}`}>Hardest</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Background Card Stack Effect */}
-                    <div className="absolute inset-0 bg-white rounded-3xl shadow-sm border border-slate-200 -z-10 scale-95 translate-y-2 opacity-50"></div>
-                    <div className="absolute inset-0 bg-white rounded-3xl shadow-sm border border-slate-200 -z-20 scale-90 translate-y-4 opacity-25"></div>
-                </div>
+            return React.createElement('div', { className: "relative h-96 w-full max-w-md mx-auto [perspective:1000px]" },
+                // Card Container with Physics
+                React.createElement('div', {
+                    ref: cardRef,
+                    className: "absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none",
+                    style: {
+                        transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg)`,
+                        transition: transitionStyle,
+                        zIndex: 50
+                    },
+                    onMouseDown: handleMouseDown,
+                    onDoubleClick: handleDoubleClick,
+                    onTouchStart: handleTouchStart,
+                    onTouchMove: handleTouchMove,
+                    onTouchEnd: handleTouchEnd
+                },
+                    React.createElement('div', { className: `relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}` },
+                        
+                        // FRONT SIDE
+                        React.createElement('div', { className: `absolute inset-0 h-full w-full rounded-3xl bg-white p-8 shadow-2xl [backface-visibility:hidden] border-4 ${getBorderColor()} flex flex-col items-center justify-center text-center select-none` },
+                            getBadge(),
+                            // Overlays for Swipe Feedback
+                            React.createElement('div', { className: "absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30", style: { opacity: opacityHardest, backgroundColor: 'rgba(220, 38, 38, 0.1)' } },
+                                React.createElement('span', { className: "text-4xl font-black text-red-500 border-4 border-red-500 rounded-lg px-4 py-2 -rotate-12 bg-white/80" }, "HARDEST")
+                            ),
+                            React.createElement('div', { className: "absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30", style: { opacity: opacityNext, backgroundColor: 'rgba(79, 70, 229, 0.1)' } },
+                                React.createElement('span', { className: "text-4xl font-black text-indigo-500 border-4 border-indigo-500 rounded-lg px-4 py-2 rotate-12 bg-white/80" }, "NEXT")
+                            ),
+                            React.createElement('div', { className: "absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-center z-30", style: { opacity: opacityHard, backgroundColor: 'rgba(245, 158, 11, 0.1)' } },
+                                React.createElement('span', { className: "text-4xl font-black text-amber-500 border-4 border-amber-500 rounded-lg px-4 py-2 bg-white/80" }, "HARD")
+                            ),
+                            // Content
+                            React.createElement('div', { className: "flex-1 flex flex-col justify-center w-full" },
+                                React.createElement('h2', { className: "text-4xl md:text-5xl font-extrabold text-indigo-900 mb-4 break-words leading-tight" }, wordData.word)
+                            ),
+                            React.createElement('div', { className: "mt-auto pt-6 border-t border-indigo-50 w-full flex justify-between items-center text-xs text-slate-400 uppercase tracking-widest font-semibold" },
+                                React.createElement('span', null, "Tap to Flip")
+                            )
+                        ),
+                        
+                        // BACK SIDE
+                        React.createElement('div', { className: `absolute inset-0 h-full w-full rounded-3xl bg-indigo-900 p-8 shadow-2xl [transform:rotateY(180deg)] [backface-visibility:hidden] text-white flex flex-col justify-between border-4 ${difficulty === 'hardest' ? 'border-red-500' : difficulty === 'hard' ? 'border-amber-500' : 'border-indigo-800'} select-none` },
+                            React.createElement('div', { className: "flex flex-col items-center justify-center flex-1 space-y-3 overflow-y-auto no-scrollbar" },
+                                React.createElement('div', { className: "text-center" },
+                                    React.createElement('h3', { className: "text-2xl font-bold text-yellow-400 mb-1 font-serif tracking-wide" }, wordData.banglaMeaning),
+                                    React.createElement('p', { className: "text-xs text-indigo-300 italic font-medium mb-2" }, wordData.synonyms)
+                                ),
+                                React.createElement('div', { className: "bg-indigo-800/60 p-3 rounded-xl w-full text-center backdrop-blur-sm border border-indigo-700/50" },
+                                    React.createElement('p', { className: "text-sm font-medium text-indigo-50 leading-snug" }, wordData.englishMeaning)
+                                ),
+                                React.createElement('div', { className: "text-center w-full px-2" },
+                                    React.createElement('p', { className: "text-xs italic text-indigo-300 leading-relaxed" }, `"${wordData.exampleSentence}"`)
+                                )
+                            ),
+                            // Controls
+                            React.createElement('div', { className: "mt-2 pt-2 border-t border-indigo-700/50 grid grid-cols-3 gap-2" },
+                                React.createElement('button', { 
+                                    onTouchEnd: (e) => handleDifficultyButton(e, null), 
+                                    onClick: (e) => handleDifficultyButton(e, null), 
+                                    className: `text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === null ? 'bg-indigo-600 text-white' : 'bg-indigo-950 text-indigo-400'}` 
+                                }, "Reset"),
+                                React.createElement('button', { 
+                                    onTouchEnd: (e) => handleDifficultyButton(e, 'hard'), 
+                                    onClick: (e) => handleDifficultyButton(e, 'hard'), 
+                                    className: `text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === 'hard' ? 'bg-amber-500 text-white' : 'bg-indigo-950 text-amber-500/70'}` 
+                                }, "Hard"),
+                                React.createElement('button', { 
+                                    onTouchEnd: (e) => handleDifficultyButton(e, 'hardest'), 
+                                    onClick: (e) => handleDifficultyButton(e, 'hardest'), 
+                                    className: `text-[10px] py-2 rounded-lg font-bold uppercase tracking-wider ${difficulty === 'hardest' ? 'bg-red-600 text-white' : 'bg-indigo-950 text-red-500/70'}` 
+                                }, "Hardest")
+                            )
+                        )
+                    )
+                ),
+                // Background Stack
+                React.createElement('div', { className: "absolute inset-0 bg-white rounded-3xl shadow-sm border border-slate-200 -z-10 scale-95 translate-y-2 opacity-50" }),
+                React.createElement('div', { className: "absolute inset-0 bg-white rounded-3xl shadow-sm border border-slate-200 -z-20 scale-90 translate-y-4 opacity-25" })
             );
         };
 
@@ -343,6 +348,7 @@
             const [activeView, setActiveView] = useState('1');
             const [currentIndex, setCurrentIndex] = useState(0);
             const [isCardFlipped, setIsCardFlipped] = useState(false);
+            const [slideDirection, setSlideDirection] = useState('right');
             const [markedWords, setMarkedWords] = useState({});
             const [user, setUser] = useState(null);
             const [isSyncing, setIsSyncing] = useState(false);
@@ -637,7 +643,8 @@
                                 onSetDifficulty: (l) => handleDifficultyChange(currentWord.word, l),
                                 isFlipped: isCardFlipped,
                                 onFlip: handleFlip,
-                                onNext: handleNext
+                                onNext: handleNext,
+                                direction: slideDirection
                             }),
 
                             /* Desktop Buttons */
