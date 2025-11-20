@@ -149,13 +149,21 @@
                 
                 if (dragPosition.x > threshold) { // Swipe Right (Hardest)
                     setExitVelocity({ x: 500, y: dragPosition.y });
-                    setTimeout(() => onSetDifficulty('hardest'), 200);
+                    // FIX: Call onNext() after setting difficulty
+                    setTimeout(() => {
+                        onSetDifficulty('hardest');
+                        onNext();
+                    }, 200);
                 } else if (dragPosition.x < -threshold) { // Swipe Left (Next)
                     setExitVelocity({ x: -500, y: dragPosition.y });
                     setTimeout(() => onNext(), 200);
                 } else if (dragPosition.y < -threshold) { // Swipe Up (Hard)
                     setExitVelocity({ x: dragPosition.x, y: -500 });
-                    setTimeout(() => onSetDifficulty('hard'), 200);
+                    // FIX: Call onNext() after setting difficulty
+                    setTimeout(() => {
+                        onSetDifficulty('hard');
+                        onNext();
+                    }, 200);
                 } else if (Math.abs(dragPosition.x) < 10 && Math.abs(dragPosition.y) < 10) { // Tap
                     onFlip();
                     setDragPosition({ x: 0, y: 0 });
@@ -430,12 +438,18 @@
             }, [displayWords, currentIndex]);
 
             const handleNext = useCallback(() => {
-                if (currentIndex < displayWords.length - 1) {
-                    setSlideDirection('right');
-                    setIsCardFlipped(false);
-                    setCurrentIndex(p => p + 1);
-                }
-            }, [currentIndex, displayWords.length]);
+                setSlideDirection('right');
+                setIsCardFlipped(false);
+                
+                // FIX: Loop logic ensures card data always changes, preventing the "stuck" state at end of deck
+                setCurrentIndex(prev => {
+                    if (prev < displayWords.length - 1) {
+                        return prev + 1;
+                    } else {
+                        return 0; // Loop to start
+                    }
+                });
+            }, [displayWords.length]);
 
             const handlePrev = useCallback(() => {
                 if (currentIndex > 0) {
