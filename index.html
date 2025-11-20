@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,18 +27,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "vite": "https://aistudiocdn.com/vite@^7.2.2",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
-  }
-}
-</script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased h-screen overflow-hidden">
     <div id="root" class="h-full"></div>
@@ -1267,7 +1254,7 @@ Willful|Deliberate, intentional, headstrong|Done deliberately or with stubborn d
 ### Sheet 38
 Querulous|Peevish, Fretful, Captious|Complaining in a petulant or whining manner|অভিযোগপূর্ণ, ক্রমাগত অসন্তুষ্ট|The querulous customer, peevish about the long wait time, demanded to speak to the manager.
 Phony|Fraudulent, Spurious, Counterfeit|Not genuine or authentic; fake|জাল, নকল|The art dealer was arrested for selling fraudulent paintings he claimed were originals, discovering his collection was filled with spurious and counterfeit works.
-        `;
+`;
 
         // --- HELPER FUNCTIONS ---
         const parseRawData = (raw) => {
@@ -1687,7 +1674,7 @@ Phony|Fraudulent, Spurious, Counterfeit|Not genuine or authentic; fake|জাল
                                 wordData: currentWord,
                                 difficulty: markedWords[currentWord.word] || null,
                                 onSetDifficulty: (l) => handleDifficultyChange(currentWord.word, l),
-                                isFlipped,
+                                isFlipped: isCardFlipped,
                                 onFlip: handleFlip,
                                 onNext: handleNext,
                                 direction: slideDirection
@@ -1725,4 +1712,3 @@ Phony|Fraudulent, Spurious, Counterfeit|Not genuine or authentic; fake|জাল
     </script>
 </body>
 </html>
-    
